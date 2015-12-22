@@ -1,0 +1,92 @@
+<html class="html">
+<head>
+  <meta charset="UTF-8">
+  <title>Hurricane</title>
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+  <link rel="stylesheet" href="css/leaflet.draw.css">
+  <style>
+
+  
+    #map {
+      height:100%;
+      width: 100%;
+    }
+
+    #about {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: #575757;
+      margin: 15px;
+      padding: 10px;
+      color: #FFF;
+      font-family: sans-serif;
+      border-radius: 10px;
+      width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="about">
+    <h3>Mock Hurricane Track Tool</h3>
+    <p>This is an example that uses leaflet.draw and turf.js to create a mock hurricane path.  Click the pencil to draw a path.  When the path is complete, turf.js will buffer the points, incrementing the radius for each. It performs a convex hull of each set of two buffers to create a segment, and then a union of all segments to create the final polygon for the hurricane. </p>
+
+    <p>This is neigher accurate nor scientific, but is an example of algoritmically building a polygon from a polyline.  The final polygon could be used to do a spatial join to count things inside the hurricane's predicted path.</p>
+  </div>
+  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+  <script src="js/leaflet.draw.js"></script>
+  <script src='https://api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.2/turf.min.js'></script>
+  <script src="js/hurricane.js"></script>
+  <script type="text/javascript">
+
+
+    var map = L.map('map', {
+      scrollWheelZoom: false,
+      center: [30.864510,-78.925781],
+      zoom: 5
+    });
+
+    var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+    }).addTo(map);
+
+
+    // Initialise the FeatureGroup to store editable layers
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    // Initialise the draw control and pass it the FeatureGroup of editable layers
+    var drawControl = new L.Control.Draw({
+        edit: {
+            featureGroup: drawnItems
+        },
+        position: 'topright',
+        draw: {
+            polyline:true,
+            polygon: false,
+            circle: false,
+            marker: false,
+            rectangle: false
+        }
+    });
+
+    map.addControl(drawControl);
+
+    map.on('draw:created', function (e) {
+        var layer = e.layer;
+
+        //in km
+        var startRadius = 50,
+          increment = 100;
+
+        var hurricane = makeHurricane(layer.toGeoJSON(),startRadius, increment);
+
+        L.geoJson(hurricane).addTo(map);
+
+        drawnItems.addLayer(layer);
+    });
+
+  </script>
+</body>
+</html>
