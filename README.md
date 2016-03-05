@@ -1,2 +1,2 @@
-# hurricane-track
-Uses leaflet draw and turf.js to create a mock hurricane path prediction polygon from a user-drawn polyline
+# statenIslandBusTracks
+Uses turf.js to create variable-width linear polygon along a bus route to visualize ridership data
