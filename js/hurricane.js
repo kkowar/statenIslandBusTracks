@@ -1,17 +1,18 @@
 //makehurricane.js - given a geoJson polyline feature, starting radius in km, 
 //and increment in km, uses turf.js to return a hurricane path as a geoJson polygon feature.
 
-var makeHurricane = function(feature, startRadius, increment) {
-  var points=feature.geometry.coordinates;
-  var numPoints=feature.geometry.coordinates.length;
+var multiplier = .05;
+
+var makeTrack = function(featureCollection, property) {
+
+  var points=featureCollection.features;
+  var numPoints=points.length;
 
   var segments = [];
-  var radius = startRadius;
 
   //create segments for each pair of points
   for(var i=1;i<numPoints;i++) {
-    segments.push(makeSegment(points[i-1],radius,points[i],radius + increment));
-    radius += increment;  
+    segments.push(makeSegment(points[i-1],points[i])); 
   }
 
   //union together all segments
@@ -23,15 +24,33 @@ var makeHurricane = function(feature, startRadius, increment) {
   return hurricane;
 
   //pass in two geoJson point features and two radii, create buffer for each point, convex hull all
-  function makeSegment(coord0, radius0, coord1, radius1) {
+  function makeSegment(feature0, feature1) {
 
-    var feature0 = turf.point(coord0);
-    var feature1 = turf.point(coord1);
 
-    var buffer0 = turf.buffer(feature0, radius0, 'kilometers');
-    var buffer1 = turf.buffer(feature1, radius1, 'kilometers');
+    // var feature0 = turf.point(coord0);
+    // var feature1 = turf.point(coord1);
 
-    return convex(buffer0.features[0],buffer1.features[0]);
+    if(feature0.properties[property] == 0) {
+     feature0.properties[property] = .0001; 
+    } 
+
+    if(feature1.properties[property] == 0) {
+     feature1.properties[property] = .0001; 
+    } 
+
+
+    var buffer0 = turf.buffer(feature0, feature0.properties[property] * multiplier , 'kilometers');
+    var buffer1 = turf.buffer(feature1, feature1.properties[property] * multiplier , 'kilometers');
+
+    // L.geoJson(buffer0).addTo(map);
+    // L.geoJson(buffer1).addTo(map);
+
+
+    hull = convex(buffer0.features[0],buffer1.features[0])
+
+  
+
+    return hull ;
   }
 
   //pass in two geoJson polygon features, create one big featurecollection of points,
